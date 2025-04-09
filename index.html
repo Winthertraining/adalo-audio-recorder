@@ -1,24 +1,49 @@
-mediaRecorder.addEventListener("stop", () => {
-  const audioBlob = new Blob(audioChunks);
-  const audioUrl = URL.createObjectURL(audioBlob);
-  audioPlayback.src = audioUrl;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lydoptager</title>
+</head>
+<body>
+  <button id="startRecord">Start Optagelse</button>
+  <button id="stopRecord" disabled>Stop Optagelse</button>
+  <audio id="audioPlayback" controls></audio>
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
 
-  // Send audioUrl to your Make webhook
-  fetch('https://hook.eu2.make.com/syx5vw8sd91ynhazzeulkyb273k3td1p', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ audioUrl: audioUrl })
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-  })
-  .then(data => console.log('Success:', data))
-  .catch((error) => {
-    console.error('Error:', error);
-  });
-});
+    const startRecord = document.getElementById("startRecord");
+    const stopRecord = document.getElementById("stopRecord");
+    const audioPlayback = document.getElementById("audioPlayback");
+
+    startRecord.addEventListener("click", () => {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.start();
+          audioChunks = [];
+          stopRecord.disabled = false;
+          startRecord.disabled = true;
+
+          mediaRecorder.addEventListener("dataavailable", event => {
+            audioChunks.push(event.data);
+          });
+
+          mediaRecorder.addEventListener("stop", () => {
+            const audioBlob = new Blob(audioChunks);
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayback.src = audioUrl;
+            // Send audioUrl to your server or Make webhook
+          });
+        });
+    });
+
+    stopRecord.addEventListener("click", () => {
+      mediaRecorder.stop();
+      stopRecord.disabled = true;
+      startRecord.disabled = false;
+    });
+  </script>
+</body>
+</html>
