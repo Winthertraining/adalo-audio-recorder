@@ -1,0 +1,24 @@
+mediaRecorder.addEventListener("stop", () => {
+  const audioBlob = new Blob(audioChunks);
+  const audioUrl = URL.createObjectURL(audioBlob);
+  audioPlayback.src = audioUrl;
+
+  // Send audioUrl to your Make webhook
+  fetch('https://hook.eu2.make.com/syx5vw8sd91ynhazzeulkyb273k3td1p', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ audioUrl: audioUrl })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => console.log('Success:', data))
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+});
